@@ -60,35 +60,6 @@ else:
     df.to_csv(DATA_FILE, index=False)
 
 # ---------------------------
-# RESET BUTTON (WITH CONFIRMATION)
-# ---------------------------
-st.markdown("### 🔄 Reset All Data")
-
-if "confirm_reset" not in st.session_state:
-    st.session_state.confirm_reset = False
-
-if st.button("RESET EVERYTHING (Start Fresh)"):
-    st.session_state.confirm_reset = True
-
-if st.session_state.confirm_reset:
-    st.warning("⚠️ This will permanently delete ALL scores. Are you sure?")
-    col1, col2 = st.columns(2)
-
-    with col1:
-        if st.button("Yes, delete everything"):
-            df = pd.DataFrame(columns=[
-                "name", "date", "break", "diet", "workout", "social", "diet_penalty", "score"
-            ])
-            df.to_csv(DATA_FILE, index=False)
-            st.success("🔥 All data cleared! Starting fresh now.")
-            st.session_state.confirm_reset = False
-
-    with col2:
-        if st.button("Cancel"):
-            st.session_state.confirm_reset = False
-            st.info("Reset canceled.")
-
-# ---------------------------
 # INPUT SECTION
 # ---------------------------
 st.markdown("<div class='section-title'>Submit Today's Update</div>", unsafe_allow_html=True)
@@ -131,7 +102,7 @@ st.subheader(f"⭐ Today's Score: {score}")
 if st.button("Submit Today's Score"):
     today_pst = get_pst_today()
 
-    # Remove any existing record for same person + date
+    # Remove existing entry for person + date
     df = df[~((df["name"] == name) & (df["date"] == str(today_pst)))]
 
     new_row = {
@@ -166,7 +137,7 @@ else:
     st.dataframe(daily_df[["name", "break", "diet", "workout", "social", "score"]])
 
 # ---------------------------
-# WEEKLY SUMMARY (Calendar Week)
+# WEEKLY SUMMARY
 # ---------------------------
 st.markdown("<div class='section-title'>📅 Weekly Summary (Calendar Week)</div>", unsafe_allow_html=True)
 
@@ -187,7 +158,7 @@ if len(weekly_scores) > 0:
     )
 
 # ---------------------------
-# MONTHLY SUMMARY (Calendar Month)
+# MONTHLY SUMMARY
 # ---------------------------
 st.markdown("<div class='section-title'>📆 Monthly Summary (Calendar Month)</div>", unsafe_allow_html=True)
 
@@ -206,3 +177,32 @@ if len(monthly_scores) > 0:
         f"<div class='winner-box'>🏆 Monthly Winner: {mw['name']} ({mw['score']} points)</div>",
         unsafe_allow_html=True
     )
+
+# ---------------------------
+# RESET BUTTON — MOVED TO END OF PAGE
+# ---------------------------
+st.markdown("<div class='section-title'>🔄 Reset All Data</div>", unsafe_allow_html=True)
+
+if "confirm_reset" not in st.session_state:
+    st.session_state.confirm_reset = False
+
+if st.button("RESET EVERYTHING (Start Fresh)"):
+    st.session_state.confirm_reset = True
+
+if st.session_state.confirm_reset:
+    st.warning("⚠️ This will permanently delete ALL scores. Are you sure?")
+    col1, col2 = st.columns(2)
+
+    with col1:
+        if st.button("Yes, delete everything"):
+            df = pd.DataFrame(columns=[
+                "name", "date", "break", "diet", "workout", "social", "diet_penalty", "score"
+            ])
+            df.to_csv(DATA_FILE, index=False)
+            st.success("🔥 All data cleared! Starting fresh now.")
+            st.session_state.confirm_reset = False
+
+    with col2:
+        if st.button("Cancel"):
+            st.session_state.confirm_reset = False
+            st.info("Reset canceled.")
