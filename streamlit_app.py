@@ -49,7 +49,6 @@ else:
 st.markdown("<div class='section-title'>Submit Today's Update</div>", unsafe_allow_html=True)
 
 name = st.selectbox("👤 Select Name", NAMES)
-
 diet = st.selectbox("🍽️ Diet", ["Yes", "No"])
 workout = st.selectbox("💪 Workout", ["Yes", "No"])
 social = st.selectbox("📱 Social Media", ["Yes", "No"])
@@ -121,7 +120,7 @@ else:
     st.dataframe(daily_df[["name", "break", "diet", "workout", "social", "score"]])
 
 # ---------------------------
-# WEEKLY SUMMARY (Calendar Week: Mon–Sun)
+# WEEKLY SUMMARY (Calendar Week)
 # ---------------------------
 st.markdown("<div class='section-title'>📅 Weekly Summary (Calendar Week)</div>", unsafe_allow_html=True)
 
@@ -142,7 +141,7 @@ if len(weekly_scores) > 0:
     )
 
 # ---------------------------
-# MONTHLY SUMMARY (Calendar Month)
+# MONTHLY SUMMARY (CALENDAR MONTH, AUTO RESET)
 # ---------------------------
 st.markdown("<div class='section-title'>📆 Monthly Summary (Calendar Month)</div>", unsafe_allow_html=True)
 
