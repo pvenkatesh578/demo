@@ -1,7 +1,18 @@
 import streamlit as st
 import pandas as pd
-from datetime import date, timedelta
+from datetime import datetime, date, timedelta
+import pytz
 import os
+
+# ---------------------------
+# TIMEZONE → PST
+# ---------------------------
+PST = pytz.timezone("America/Los_Angeles")
+
+def get_pst_today():
+    return datetime.now(PST).date()
+
+today = get_pst_today()
 
 # ---------------------------
 # PAGE CONFIG / BEAUTIFY
@@ -10,7 +21,8 @@ st.set_page_config(page_title="Daily Habit Tracker", layout="centered")
 
 st.markdown("""
     <style>
-        .big-title { font-size: 36px; font-weight: 700; text-align: center; color: #5A2EA6; }
+        .big-title { font-size: 36px; font-weight: 700; text-align: center; color: #5A2EA6; margin-bottom: 5px; }
+        .today-date { font-size: 20px; text-align: center; color: #444; margin-bottom: 25px; }
         .section-title { font-size: 26px; font-weight: 600; margin-top: 30px; color: #333; }
         .winner-box {
             padding: 12px;
@@ -24,7 +36,9 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# TITLE + TODAY DATE DISPLAY
 st.markdown("<div class='big-title'>🏆 Daily Habit Score Tracker</div>", unsafe_allow_html=True)
+st.markdown(f"<div class='today-date'>📅 Today (PST): <b>{today}</b></div>", unsafe_allow_html=True)
 
 # ---------------------------
 # CONFIG
@@ -84,13 +98,13 @@ st.subheader(f"⭐ Today's Score: {score}")
 # SUBMIT ENTRY
 # ---------------------------
 if st.button("Submit"):
-    today = str(date.today())
+    today_pst = get_pst_today()
 
-    df = df[~((df["name"] == name) & (df["date"] == today))]
+    df = df[~((df["name"] == name) & (df["date"] == str(today_pst)))]
 
     new_row = {
         "name": name,
-        "date": today,
+        "date": str(today_pst),
         "break": take_break,
         "diet": diet,
         "workout": workout,
@@ -104,9 +118,9 @@ if st.button("Submit"):
 
     st.success("✅ Update Saved!")
 
-# Convert date
+# Convert dates
 df["date"] = pd.to_datetime(df["date"]).dt.date
-today = date.today()
+today = get_pst_today()
 
 # ---------------------------
 # DAILY SUMMARY
@@ -120,7 +134,7 @@ else:
     st.dataframe(daily_df[["name", "break", "diet", "workout", "social", "score"]])
 
 # ---------------------------
-# WEEKLY SUMMARY (Calendar Week)
+# WEEKLY SUMMARY (Calendar Week PST)
 # ---------------------------
 st.markdown("<div class='section-title'>📅 Weekly Summary (Calendar Week)</div>", unsafe_allow_html=True)
 
@@ -130,7 +144,7 @@ sunday = monday + timedelta(days=6)
 weekly_df = df[(df["date"] >= monday) & (df["date"] <= sunday)]
 weekly_scores = weekly_df.groupby("name")["score"].sum().reset_index().sort_values("score", ascending=False)
 
-st.markdown(f"**Week Range:** {monday} → {sunday}")
+st.markdown(f"**Week Range (PST):** {monday} → {sunday}")
 st.dataframe(weekly_scores)
 
 if len(weekly_scores) > 0:
@@ -141,7 +155,7 @@ if len(weekly_scores) > 0:
     )
 
 # ---------------------------
-# MONTHLY SUMMARY (CALENDAR MONTH, AUTO RESET)
+# MONTHLY SUMMARY (Calendar Month PST)
 # ---------------------------
 st.markdown("<div class='section-title'>📆 Monthly Summary (Calendar Month)</div>", unsafe_allow_html=True)
 
@@ -151,7 +165,7 @@ month_end = today
 monthly_df = df[(df["date"] >= month_start) & (df["date"] <= month_end)]
 monthly_scores = monthly_df.groupby("name")["score"].sum().reset_index().sort_values("score", ascending=False)
 
-st.markdown(f"**Month Range:** {month_start} → {month_end}")
+st.markdown(f"**Month Range (PST):** {month_start} → {month_end}")
 st.dataframe(monthly_scores)
 
 if len(monthly_scores) > 0:
