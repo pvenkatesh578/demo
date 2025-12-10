@@ -22,7 +22,7 @@ st.set_page_config(page_title="Daily Habit Tracker", layout="centered")
 st.markdown("""
     <style>
         .big-title { font-size: 36px; font-weight: 700; text-align: center; color: #5A2EA6; margin-bottom: 5px; }
-        .today-date { font-size: 20px; text-align: center; color: #444; margin-bottom: 25px; }
+        .today-date { font-size: 20px; text-align: center; color: #444; margin-bottom: 20px; }
         .section-title { font-size: 26px; font-weight: 600; margin-top: 30px; color: #333; }
         .winner-box {
             padding: 12px;
@@ -36,7 +36,9 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# TITLE + TODAY DATE DISPLAY
+# ---------------------------
+# TITLE + TODAY DATE
+# ---------------------------
 st.markdown("<div class='big-title'>🏆 Daily Habit Score Tracker</div>", unsafe_allow_html=True)
 st.markdown(f"<div class='today-date'>📅 Today (PST): <b>{today}</b></div>", unsafe_allow_html=True)
 
@@ -56,6 +58,35 @@ else:
         "name", "date", "break", "diet", "workout", "social", "diet_penalty", "score"
     ])
     df.to_csv(DATA_FILE, index=False)
+
+# ---------------------------
+# RESET BUTTON (WITH CONFIRMATION)
+# ---------------------------
+st.markdown("### 🔄 Reset All Data")
+
+if "confirm_reset" not in st.session_state:
+    st.session_state.confirm_reset = False
+
+if st.button("RESET EVERYTHING (Start Fresh)"):
+    st.session_state.confirm_reset = True
+
+if st.session_state.confirm_reset:
+    st.warning("⚠️ This will permanently delete ALL scores. Are you sure?")
+    col1, col2 = st.columns(2)
+
+    with col1:
+        if st.button("Yes, delete everything"):
+            df = pd.DataFrame(columns=[
+                "name", "date", "break", "diet", "workout", "social", "diet_penalty", "score"
+            ])
+            df.to_csv(DATA_FILE, index=False)
+            st.success("🔥 All data cleared! Starting fresh now.")
+            st.session_state.confirm_reset = False
+
+    with col2:
+        if st.button("Cancel"):
+            st.session_state.confirm_reset = False
+            st.info("Reset canceled.")
 
 # ---------------------------
 # INPUT SECTION
@@ -97,9 +128,10 @@ st.subheader(f"⭐ Today's Score: {score}")
 # ---------------------------
 # SUBMIT ENTRY
 # ---------------------------
-if st.button("Submit"):
+if st.button("Submit Today's Score"):
     today_pst = get_pst_today()
 
+    # Remove any existing record for same person + date
     df = df[~((df["name"] == name) & (df["date"] == str(today_pst)))]
 
     new_row = {
@@ -118,7 +150,7 @@ if st.button("Submit"):
 
     st.success("✅ Update Saved!")
 
-# Convert dates
+# Convert date field
 df["date"] = pd.to_datetime(df["date"]).dt.date
 today = get_pst_today()
 
@@ -134,7 +166,7 @@ else:
     st.dataframe(daily_df[["name", "break", "diet", "workout", "social", "score"]])
 
 # ---------------------------
-# WEEKLY SUMMARY (Calendar Week PST)
+# WEEKLY SUMMARY (Calendar Week)
 # ---------------------------
 st.markdown("<div class='section-title'>📅 Weekly Summary (Calendar Week)</div>", unsafe_allow_html=True)
 
@@ -155,7 +187,7 @@ if len(weekly_scores) > 0:
     )
 
 # ---------------------------
-# MONTHLY SUMMARY (Calendar Month PST)
+# MONTHLY SUMMARY (Calendar Month)
 # ---------------------------
 st.markdown("<div class='section-title'>📆 Monthly Summary (Calendar Month)</div>", unsafe_allow_html=True)
 
