@@ -33,12 +33,14 @@ NAMES = ["Theju", "Udaya", "Teju", "Tushara", "Kavya"]
 DATA_FILE = "scores.csv"
 
 # ---------------------------
-# LOAD / INITIALIZE DATA
+# LOAD DATA
 # ---------------------------
 if os.path.exists(DATA_FILE):
     df = pd.read_csv(DATA_FILE)
 else:
-    df = pd.DataFrame(columns=["name", "date", "break", "diet", "workout", "social", "diet_penalty", "score"])
+    df = pd.DataFrame(columns=[
+        "name", "date", "break", "diet", "workout", "social", "diet_penalty", "score"
+    ])
     df.to_csv(DATA_FILE, index=False)
 
 # ---------------------------
@@ -52,16 +54,14 @@ diet = st.selectbox("🍽️ Diet", ["Yes", "No"])
 workout = st.selectbox("💪 Workout", ["Yes", "No"])
 social = st.selectbox("📱 Social Media", ["Yes", "No"])
 
-# -----------------------------------
-# BREAK OPTION ONLY IF WORKOUT = NO
-# -----------------------------------
+# BREAK ONLY IF WORKOUT = NO
 if workout == "No":
     take_break = st.selectbox("🛑 Break Today?", ["No", "Yes"])
 else:
-    take_break = "No"  # hide & force No break
+    take_break = "No"
 
 # ---------------------------
-# SCORING LOGIC
+# SCORING
 # ---------------------------
 if take_break == "Yes":
     st.info("Break Day Selected → No Negative Points. Score = 0")
@@ -70,7 +70,9 @@ if take_break == "Yes":
 else:
     diet_penalty = 1
     if diet == "No":
-        diet_penalty = st.number_input("How many diet mistakes?", min_value=1, max_value=10, value=1)
+        diet_penalty = st.number_input(
+            "How many diet mistakes?", min_value=1, max_value=10, value=1
+        )
 
     score = 0
     score += 1 if diet == "Yes" else -diet_penalty
@@ -80,12 +82,11 @@ else:
 st.subheader(f"⭐ Today's Score: {score}")
 
 # ---------------------------
-# SUBMIT LOGIC (REPLACE ENTRY IF EXISTS)
+# SUBMIT ENTRY
 # ---------------------------
 if st.button("Submit"):
     today = str(date.today())
 
-    # Remove any existing entry for same person + date
     df = df[~((df["name"] == name) & (df["date"] == today))]
 
     new_row = {
@@ -102,11 +103,9 @@ if st.button("Submit"):
     df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
     df.to_csv(DATA_FILE, index=False)
 
-    st.success("✅ Your update has been submitted!")
+    st.success("✅ Update Saved!")
 
-# ---------------------------
-# FORMAT DATE
-# ---------------------------
+# Convert date
 df["date"] = pd.to_datetime(df["date"]).dt.date
 today = date.today()
 
@@ -116,14 +115,13 @@ today = date.today()
 st.markdown("<div class='section-title'>📅 Daily Summary</div>", unsafe_allow_html=True)
 
 daily_df = df[df["date"] == today]
-
 if len(daily_df) == 0:
-    st.info("No entries today yet.")
+    st.info("No entries today.")
 else:
     st.dataframe(daily_df[["name", "break", "diet", "workout", "social", "score"]])
 
 # ---------------------------
-# WEEKLY SUMMARY (Calendar Week – Mon to Sun)
+# WEEKLY SUMMARY (Calendar Week: Mon–Sun)
 # ---------------------------
 st.markdown("<div class='section-title'>📅 Weekly Summary (Calendar Week)</div>", unsafe_allow_html=True)
 
@@ -138,20 +136,23 @@ st.dataframe(weekly_scores)
 
 if len(weekly_scores) > 0:
     w = weekly_scores.iloc[0]
-    st.markdown(f"<div class='winner-box'>🏆 Weekly Winner: {w['name']} ({w['score']} points)</div>",
-                unsafe_allow_html=True)
+    st.markdown(
+        f"<div class='winner-box'>🏆 Weekly Winner: {w['name']} ({w['score']} points)</div>",
+        unsafe_allow_html=True
+    )
 
 # ---------------------------
-# MONTHLY SUMMARY (Last 28 Days)
+# MONTHLY SUMMARY (Calendar Month)
 # ---------------------------
-st.markdown("<div class='section-title'>📆 Monthly Summary (Last 28 Days)</div>", unsafe_allow_html=True)
+st.markdown("<div class='section-title'>📆 Monthly Summary (Calendar Month)</div>", unsafe_allow_html=True)
 
-month_start = today - timedelta(days=27)
-monthly_df = df[(df["date"] >= month_start) & (df["date"] <= today)]
+month_start = today.replace(day=1)
+month_end = today
 
+monthly_df = df[(df["date"] >= month_start) & (df["date"] <= month_end)]
 monthly_scores = monthly_df.groupby("name")["score"].sum().reset_index().sort_values("score", ascending=False)
 
-st.markdown(f"**28-Day Range:** {month_start} → {today}")
+st.markdown(f"**Month Range:** {month_start} → {month_end}")
 st.dataframe(monthly_scores)
 
 if len(monthly_scores) > 0:
