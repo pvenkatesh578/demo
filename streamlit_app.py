@@ -103,11 +103,34 @@ df = github_read_csv()
 df["date"] = pd.to_datetime(df["date"], errors="coerce").dt.date
 
 # ---------------------------
+# AVAILABLE DATES (PAST 60 DAYS)
+# ---------------------------
+START_DATE = today - timedelta(days=60)
+all_dates = pd.date_range(START_DATE, today).date.tolist()
+all_dates.reverse()
+
+# ---------------------------
 # INPUT SECTION
 # ---------------------------
-st.markdown("<div class='section-title'>Submit Today's Update</div>", unsafe_allow_html=True)
+st.markdown("<div class='section-title'>Submit Daily Update</div>", unsafe_allow_html=True)
+
+selected_date = st.selectbox(
+    "📅 Select Date",
+    all_dates,
+    index=0,
+    format_func=lambda d: d.strftime("%Y-%m-%d")
+)
 
 name = st.selectbox("👤 Select Name", NAMES)
+
+# Check existing entry
+already_exists = not df[
+    (df["name"] == name) & (df["date"] == selected_date)
+].empty
+
+if already_exists:
+    st.warning(f"⚠️ Entry already exists for {name} on {selected_date}. Submitting will overwrite it.")
+
 diet = st.selectbox("🍽️ Diet", ["Yes", "No"])
 workout = st.selectbox("💪 Workout", ["Yes", "No"])
 social = st.selectbox("📱 Social Media", ["Yes", "No"])
@@ -134,17 +157,17 @@ else:
     score += 1 if workout == "Yes" else -1
     score += 1 if social == "Yes" else 0
 
-st.subheader(f"⭐ Today's Score: {score}")
+st.subheader(f"⭐ Score for {selected_date}: {score}")
 
 # ---------------------------
 # SUBMIT
 # ---------------------------
-if st.button("Submit Today's Score"):
-    df = df[~((df["name"] == name) & (df["date"] == today))]
+if st.button("Submit Score"):
+    df = df[~((df["name"] == name) & (df["date"] == selected_date))]
 
     new_row = {
         "name": name,
-        "date": today,
+        "date": selected_date,
         "break": take_break,
         "diet": diet,
         "workout": workout,
@@ -154,17 +177,18 @@ if st.button("Submit Today's Score"):
     }
 
     df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
-    github_write_csv(df, f"Update {name} {today}")
+    github_write_csv(df, f"Update {name} {selected_date}")
     st.success("✅ Saved to GitHub")
 
 # ---------------------------
 # DAILY SUMMARY
 # ---------------------------
 st.markdown("<div class='section-title'>📅 Daily Summary</div>", unsafe_allow_html=True)
-daily_df = df[df["date"] == today]
+
+daily_df = df[df["date"] == selected_date]
 
 if daily_df.empty:
-    st.info("No entries today.")
+    st.info("No entries for this date.")
 else:
     st.dataframe(daily_df[["name", "break", "diet", "workout", "social", "score"]])
 
